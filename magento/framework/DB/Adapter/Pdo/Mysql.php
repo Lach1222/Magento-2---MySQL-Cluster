@@ -232,6 +232,12 @@ class Mysql extends \Zend_Db_Adapter_Pdo_Mysql implements AdapterInterface
     private $queryGenerator;
 
     /**
+     * @var
+     */
+    private $adminUrl;
+
+    /**
+     * Mysql constructor.
      * @param StringUtils $string
      * @param DateTime $dateTime
      * @param LoggerInterface $logger
@@ -250,6 +256,11 @@ class Mysql extends \Zend_Db_Adapter_Pdo_Mysql implements AdapterInterface
         $this->dateTime = $dateTime;
         $this->logger = $logger;
         $this->selectFactory = $selectFactory;
+
+        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+        $deploymentConfig = $objectManager->create('Magento\Framework\App\DeploymentConfig');
+        $this->adminUrl = $deploymentConfig->get(\Magento\Backend\Setup\ConfigOptionsList::CONFIG_PATH_BACKEND_FRONTNAME);
+
         try {
 
             /***** Skynix MySQL Cluster Part 2 *****/
@@ -301,10 +312,10 @@ class Mysql extends \Zend_Db_Adapter_Pdo_Mysql implements AdapterInterface
      */
     protected function isReadOnlyRequest( $sqlQuery )
     {
-
         $isExcept = false;
-	if ( php_sapi_name() != 'cli' && isset($_SERVER['REQUEST_URI']) ) {
-        $exceptions = ['customer', 'checkout'];
+	    if ( php_sapi_name() != 'cli' && isset($_SERVER['REQUEST_URI']) ) {
+        $exceptions = ['customer', 'checkout', $this->adminUrl];
+
         foreach ( $exceptions as $e ) {
 
             if ( strstr($_SERVER['REQUEST_URI'], $e) !== false) {
